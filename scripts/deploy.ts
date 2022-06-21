@@ -1,25 +1,36 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
-import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Contract, ContractFactory } from "ethers";
+
+const fs = require("fs");
+const { ethers, upgrades, network } = require("hardhat");
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+  // Loading accounts
+  const accounts: SignerWithAddress[] = await ethers.getSigners();
+  const addresses: string[] = accounts.map(
+    (item: SignerWithAddress) => item.address
+  );
+  const deployer: string = addresses[0];
+
+  console.log(`===DEPLOY CONTRACT TO: ${network.name}===`);
 
   // We get the contract to deploy
-  const Greeter = await ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+  const Ballot: ContractFactory = await ethers.getContractFactory("Ballot");
+  const ballot: Contract = await Ballot.deploy();
 
-  await greeter.deployed();
+  await ballot.deployed();
 
-  console.log("Greeter deployed to:", greeter.address);
+  console.log("Ballot deployed to:", ballot.address);
+
+  // export deployed contracts to json
+  const verifyArguments = {
+    Ballot: {
+      address: ballot.address,
+      constructorArguments: [],
+    },
+  };
+
+  fs.writeFileSync("verifyArguments.json", JSON.stringify(verifyArguments));
 }
 
 // We recommend this pattern to be able to use async/await everywhere

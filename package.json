@@ -4,7 +4,10 @@
     "compile": "npx hardhat compile",
     "clean": "npx hardhat clean",
     "test": "npx hardhat test",
-    "node": "npx hardhat node"
+    "node": "npx hardhat node",
+    "deploy-local": "npx hardhat run --network localhost scripts/deploy.ts",
+    "deploy-testnet": "npx hardhat run --network testnet scripts/deploy.ts",
+    "verify-testnet": "npx hardhat run --network testnet scripts/verify.ts"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",
