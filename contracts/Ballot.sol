@@ -135,7 +135,13 @@ contract Ballot {
 		session.startTime = startTime;
 		session.endTime = endTime;
 
-    for (uint i = 0; i < candidatesId.length; i++) {
+    // Base Candidate
+    session.candidates.push(Candidate({
+      id: 0,
+      voteCount: 0
+    }));
+
+    for (uint i = 1; i <= candidatesId.length; i++) {
       require(candidatesId[i] > 0, "Invalid candidate ID");
 
       Candidate memory candidate = Candidate({
@@ -214,7 +220,8 @@ contract Ballot {
     delegateFrom.delegated = to;
 
     if (delegateTo.isVoted) {
-      session.candidates[delegateTo.candidateId].voteCount += delegateFrom.weight;
+      uint256 candidateIndex = _findCandidateIndex(sessionId, delegateTo.candidateId);
+      session.candidates[candidateIndex].voteCount += delegateFrom.weight;
     } else {
       delegateTo.weight += delegateFrom.weight;
     }
@@ -240,7 +247,8 @@ contract Ballot {
     voter.isVoted = true;
     voter.candidateId = candidateId;
 
-    session.candidates[candidateId].voteCount += voter.weight;
+    uint256 candidateIndex = _findCandidateIndex(sessionId,candidateId );
+    session.candidates[candidateIndex].voteCount += voter.weight;
   }
 
   /**
@@ -252,18 +260,18 @@ contract Ballot {
    *
    *  @return Winning Canidate ID
 	 */
-  function winningCandidate(uint256 sessionId) external view validSession(sessionId) checkSessionStatus(sessionId, Status.DONE) returns(uint256) {
+  function winningCandidate(uint256 sessionId) external view validSession(sessionId) checkSessionStatus(sessionId, Status.DONE) returns(Candidate memory) {
     Session storage session = sessions[sessionId];
 
-    uint256 winningId = 0;
+    uint256 winningIndex = 0;
 
     for (uint16 i = 0; i < session.candidates.length; i++) {
-      if (session.candidates[i].voteCount > session.candidates[winningId].voteCount) {
-        winningId = i;
+      if (session.candidates[i].voteCount > session.candidates[winningIndex].voteCount) {
+        winningIndex = i;
       }
     }
 
-    return winningId;
+    return session.candidates[winningIndex];
   }
 
   /**
@@ -279,5 +287,15 @@ contract Ballot {
     if (block.timestamp < session.startTime) return Status.PENDDING;
     if (block.timestamp > session.endTime) return Status.DONE;
     return Status.VOTING;
+  }
+
+  function _findCandidateIndex(uint256 sessionId, uint256 candidateId) private view returns (uint256) {
+    Session storage session = sessions[sessionId];
+    for (uint i = 0; i < session.candidates.length; i++) {
+      Candidate memory candidate = session.candidates[i];
+      if (candidate.id == candidateId)
+        return i;
+    }
+    return 0;
   }
 }
