@@ -124,13 +124,10 @@ contract Ballot {
 	 */
 	function createSession(
 		address chairperson,
-		uint256[] memory candidatesId,
 		uint256 startTime,
 		uint256 endTime
 	) external disallowedContractAddress(chairperson) {
 		require(chairperson != address(0), "Invalid chairperson");
-		require(candidatesId.length > 0, "No one to vote");
-		require(candidatesId.length <= 1000, "Exeeded max of candidates");
 		require(startTime > block.timestamp && endTime > startTime, "Invalid session time");
 
 		lastSessionId++;
@@ -141,14 +138,17 @@ contract Ballot {
 
 		// Base Candidate
 		session.candidates.push(Candidate({ id: 0, voteCount: 0 }));
-
-		for (uint i = 1; i <= candidatesId.length; i++) {
-			require(candidatesId[i] > 0, "Invalid candidate ID");
-
-			Candidate memory candidate = Candidate({ id: candidatesId[i], voteCount: 0 });
-			session.candidates.push(candidate);
-		}
 	}
+
+  function addCandidate(uint256 sessionId, uint256 candidateId) external validSession(sessionId) checkSessionStatus(sessionId, Status.PENDDING) onlyChairperson(sessionId) {
+    require(candidateId > 0, "Invalid candidate id");
+
+    Session storage session = sessions[sessionId];
+    for (uint16 i = 0; i < session.candidates.length; i++) {
+      require(session.candidates[i].id != candidateId, "This candidate has already existed");
+    }
+    session.candidates.push(Candidate({ id: candidateId, voteCount: 0 }));
+  }
 
 	function getVoterFromSession(uint256 sessionId, address voterAddress) external view validSession(sessionId) returns (Voter memory) {
 		return sessions[sessionId].voters[voterAddress];
