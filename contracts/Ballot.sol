@@ -135,12 +135,9 @@ contract Ballot {
 		session.chairperson = chairperson;
 		session.startTime = startTime;
 		session.endTime = endTime;
-
-		// Base Candidate
-		session.candidates.push(Candidate({ id: 0, voteCount: 0 }));
 	}
 
-  function addCandidate(uint256 sessionId, uint256 candidateId) external validSession(sessionId) checkSessionStatus(sessionId, Status.PENDDING) onlyChairperson(sessionId) {
+  function addCandidate(uint256 sessionId, uint256 candidateId) external validSession(sessionId) onlyChairperson(sessionId) {
     require(candidateId > 0, "Invalid candidate id");
 
     Session storage session = sessions[sessionId];
@@ -169,7 +166,7 @@ contract Ballot {
 	 *  @param  sessionId     Session ID of a Ballot Session
 	 *  @param  voters        Voters to give right
 	 */
-	function giveRightToVote(uint256 sessionId, address[] memory voters) external validSession(sessionId) checkSessionStatus(sessionId, Status.PENDDING) onlyChairperson(sessionId) disallowedContractAddresses(voters) {
+	function giveRightToVote(uint256 sessionId, address[] memory voters) external validSession(sessionId) onlyChairperson(sessionId) disallowedContractAddresses(voters) {
 		require(voters.length <= MAX_LOOP, "Voters count is too big");
 
 		Session storage session = sessions[sessionId];
@@ -195,7 +192,7 @@ contract Ballot {
 	 *  @param  sessionId     Session ID of a Ballot Session
 	 *  @param  to            Person to delegate
 	 */
-	function delegate(uint256 sessionId, address to) external validSession(sessionId) checkSessionStatus(sessionId, Status.VOTING) disallowedContractAddress(to) {
+	function delegate(uint256 sessionId, address to) external validSession(sessionId) disallowedContractAddress(to) {
 		Session storage session = sessions[sessionId];
 		Voter storage delegateFrom = session.voters[msg.sender];
 
@@ -234,7 +231,7 @@ contract Ballot {
 	 *  @param  sessionId     Session ID of a Ballot Session
 	 *  @param  candidateId   ID if candidate to delegate
 	 */
-	function vote(uint256 sessionId, uint256 candidateId) external validSession(sessionId) checkSessionStatus(sessionId, Status.VOTING) {
+	function vote(uint256 sessionId, uint256 candidateId) external validSession(sessionId) {
 		Session storage session = sessions[sessionId];
 		Voter storage voter = session.voters[msg.sender];
 
@@ -257,7 +254,7 @@ contract Ballot {
 	 *
 	 *  @return Winning Canidate ID
 	 */
-	function winningCandidate(uint256 sessionId) external view validSession(sessionId) checkSessionStatus(sessionId, Status.DONE) returns (Candidate memory) {
+	function winningCandidate(uint256 sessionId) external view validSession(sessionId) returns (Candidate memory) {
 		Session storage session = sessions[sessionId];
 
 		uint256 winningIndex = 0;
@@ -292,6 +289,6 @@ contract Ballot {
 			Candidate memory candidate = session.candidates[i];
 			if (candidate.id == candidateId) return i;
 		}
-		return 0;
+		return session.candidates.length;
 	}
 }
